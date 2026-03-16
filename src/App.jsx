@@ -879,9 +879,16 @@ if (gamesArray.length === 0) {
     }
   }
 
-    fetchOdds();
-fetchModelProps();
-fetchNflProps();
+   if (activeSport === "basketball_nba") {
+  fetchOdds();
+  fetchModelProps();
+} else if (activeSport === "americanfootball_nfl") {
+  setLiveGames([]);
+  setActiveGame(null);
+  setLiveLoading(false);
+  setLiveError(null);
+  fetchNflProps();
+}
 }, [activeSport]);
 
   // Use live games if available, fall back to hardcoded
