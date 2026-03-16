@@ -958,16 +958,17 @@ if (gamesArray.length === 0) {
   <div className="ai-tag">AI POWERED</div>
 </div>
 
-              {liveLoading && (
-              <div style={{padding:"20px",textAlign:"center",fontFamily:"DM Mono,monospace",fontSize:"11px",color:"var(--muted)",letterSpacing:"2px"}}>
-                LOADING LIVE ODDS...
-              </div>
-            )}
-            {liveError && (
-              <div style={{padding:"12px 16px",background:"rgba(255,45,107,.08)",border:"1px solid rgba(255,45,107,.2)",marginBottom:"12px",fontFamily:"DM Mono,monospace",fontSize:"11px",color:"var(--magenta)"}}>
-                {liveError} — showing demo data
-              </div>
-            )}
+            {activeSport === "basketball_nba" && liveLoading && (
+  <div style={{padding:"20px",textAlign:"center",fontFamily:"DM Mono,monospace",fontSize:"11px",color:"var(--muted)",letterSpacing:"2px"}}>
+    LOADING LIVE ODDS...
+  </div>
+)}
+
+{activeSport === "basketball_nba" && liveError && (
+  <div style={{padding:"12px 16px",background:"rgba(255,45,107,.08)",border:"1px solid rgba(255,45,107,.2)",marginBottom:"12px",fontFamily:"DM Mono,monospace",fontSize:"11px",color:"var(--magenta)"}}>
+    {liveError} — showing demo data
+  </div>
+)}
             {activeSport === "basketball_nba" && displayGames.map(g => (
                 <div key={g.key}>
                                   <div
@@ -1107,24 +1108,26 @@ if (gamesArray.length === 0) {
   </>
 )}
 
-              <div className="parlay-box">
-                <div className="parlay-title">PARLAY OF THE DAY</div>
-                {[
-                  {name:"Tatum OVER 32.5 pts",line:"BOS vs MIA · 81% CONF"},
-                  {name:"Jokic OVER 54.5 PRA",line:"DEN vs LAL · 77% CONF"},
-                  {name:"BOS -8.5",line:"BOS vs MIA · 74% CONF"},
-                ].map((leg,i)=>(
-                  <div key={i} className="pleg">
-                    <div className="pln2">{leg.name}</div>
-                    <div className="pline2">{leg.line}</div>
-                  </div>
-                ))}
-                <div className="podds">
-                  <div className="podds-l">3-LEG ODDS</div>
-                  <div className="podds-v">+512</div>
-                </div>
-                <button className="ctabtn" onClick={openChat}>UR TAKE FOR MORE PICKS →</button>
-              </div>
+             {activeSport === "basketball_nba" && (
+  <div className="parlay-box">
+    <div className="parlay-title">PARLAY OF THE DAY</div>
+    {[
+      {name:"Tatum OVER 32.5 pts",line:"BOS vs MIA · 81% CONF"},
+      {name:"Jokic OVER 54.5 PRA",line:"DEN vs LAL · 77% CONF"},
+      {name:"BOS -8.5",line:"BOS vs MIA · 74% CONF"},
+    ].map((leg,i)=>(
+      <div key={i} className="pleg">
+        <div className="pln2">{leg.name}</div>
+        <div className="pline2">{leg.line}</div>
+      </div>
+    ))}
+    <div className="podds">
+      <div className="podds-l">3-LEG ODDS</div>
+      <div className="podds-v">+512</div>
+    </div>
+    <button className="ctabtn" onClick={openChat}>UR TAKE FOR MORE PICKS →</button>
+  </div>
+)}
             </div>
           </div>
         )}
@@ -1134,7 +1137,7 @@ if (gamesArray.length === 0) {
             <div className="chat-topbar">
               <button className="chat-back" onClick={()=>setView("slate")}>← SLATE</button>
               <div className="chat-title">UR TAKE</div>
-              <div className="chat-sub">NBA · MAR 15</div>
+              <div className="chat-sub">   {activeSport === "basketball_nba" ? "NBA · TODAY" : "NFL · SEASON"} </div>
             </div>
 
             <div className="cap-bar">
