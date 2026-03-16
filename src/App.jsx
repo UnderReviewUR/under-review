@@ -1053,9 +1053,6 @@ if (gamesArray.length === 0) {
               ))}
 {activeSport === "americanfootball_nfl" && (
   <div style={{ marginTop: "10px" }}>
-    <div style={{ color: "#9BA4B0", fontFamily: "DM Mono, monospace", fontSize: "11px", marginBottom: "10px" }}>
-      QBs: {nflProps.qbs.length} | RBs: {nflProps.rbs.length} | WRs: {nflProps.wrs.length}
-    </div>
 
     <div className="props-title">QB PROJECTIONS</div>
     {nflProps.qbs.map((p, i) => (
