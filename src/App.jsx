@@ -699,111 +699,146 @@ export default function App() {
 
   // Fetch live odds on mount and sport change
   useEffect(() => {
-    async function fetchOdds() {
-      setLiveLoading(true);
-      setLiveError(null);
-      try {
-        const res = await fetch(`/api/odds?sport=${activeSport}`);
-        const data = await res.json();
-        if (data.error) {
-          setLiveError("Could not load live odds.");
-          setLiveGames([]);
-        } else {
-          // Transform API data into our game format
-          const transformed = (Array.isArray(data) ? data : []).slice(0, 5).map((game, i) => {
-            const h2h = game.bookmakers?.[0]?.markets?.find(m => m.key === "h2h");
-            const spread = game.bookmakers?.[0]?.markets?.find(m => m.key === "spreads");
-            const total = game.bookmakers?.[0]?.markets?.find(m => m.key === "totals");
+  async function fetchOdds() {
+    setLiveLoading(true);
+    setLiveError(null);
 
-            const homeTeam = game.home_team;
-            const awayTeam = game.away_team;
-            const homeTeamData = getTeam(homeTeam);
-            const awayTeamData = getTeam(awayTeam);
-            const homeAbbr = homeTeamData.abbr;
-            const awayAbbr = awayTeamData.abbr;
+    try {
+      const res = await fetch(`/api/odds?sport=${activeSport}`);
+      const data = await res.json();
 
-            const spreadOutcome = spread?.outcomes?.find(o => o.name === homeTeam);
-            const spreadVal = spreadOutcome ? (spreadOutcome.point > 0 ? "+" : "") + spreadOutcome.point : "PK";
-            const totalVal = total?.outcomes?.[0]?.point || "—";
+      console.log("odds response:", JSON.stringify(data).slice(0, 300));
 
-            const gameTime = new Date(game.commence_time);
-            const timeStr = gameTime.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) + " ET";
+      const gamesArray =
+        Array.isArray(data) ? data :
+        Array.isArray(data?.data) ? data.data :
+        Array.isArray(data?.games) ? data.games :
+        [];
 
-            const TEAM_MAP = {
-              "Atlanta Hawks":        { abbr: "ATL", color: "#E03A3E" },
-              "Boston Celtics":       { abbr: "BOS", color: "#007A33" },
-              "Brooklyn Nets":        { abbr: "BKN", color: "#6B6B6B" },
-              "Charlotte Hornets":    { abbr: "CHA", color: "#1D1160" },
-              "Chicago Bulls":        { abbr: "CHI", color: "#CE1141" },
-              "Cleveland Cavaliers":  { abbr: "CLE", color: "#860038" },
-              "Dallas Mavericks":     { abbr: "DAL", color: "#00538C" },
-              "Denver Nuggets":       { abbr: "DEN", color: "#0E2240" },
-              "Detroit Pistons":      { abbr: "DET", color: "#C8102E" },
-              "Golden State Warriors":{ abbr: "GSW", color: "#1D428A" },
-              "Houston Rockets":      { abbr: "HOU", color: "#CE1141" },
-              "Indiana Pacers":       { abbr: "IND", color: "#002D62" },
-              "Los Angeles Clippers": { abbr: "LAC", color: "#C8102E" },
-              "Los Angeles Lakers":   { abbr: "LAL", color: "#552583" },
-              "Memphis Grizzlies":    { abbr: "MEM", color: "#5D76A9" },
-              "Miami Heat":           { abbr: "MIA", color: "#98002E" },
-              "Milwaukee Bucks":      { abbr: "MIL", color: "#00471B" },
-              "Minnesota Timberwolves":{ abbr: "MIN", color: "#236192" },
-              "New Orleans Pelicans": { abbr: "NOP", color: "#0C2340" },
-              "New York Knicks":      { abbr: "NYK", color: "#006BB6" },
-              "Oklahoma City Thunder":{ abbr: "OKC", color: "#007AC1" },
-              "Orlando Magic":        { abbr: "ORL", color: "#0077C0" },
-              "Philadelphia 76ers":   { abbr: "PHI", color: "#006BB6" },
-              "Phoenix Suns":         { abbr: "PHX", color: "#1D1160" },
-              "Portland Trail Blazers":{ abbr: "POR", color: "#E03A3E" },
-              "Sacramento Kings":     { abbr: "SAC", color: "#5A2D81" },
-              "San Antonio Spurs":    { abbr: "SAS", color: "#8A8D8F" },
-              "Toronto Raptors":      { abbr: "TOR", color: "#CE1141" },
-              "Utah Jazz":            { abbr: "UTA", color: "#002B5C" },
-              "Washington Wizards":   { abbr: "WAS", color: "#002B5C" },
-            };
-
-            const getTeam = (name) => {
-              if (TEAM_MAP[name]) return TEAM_MAP[name];
-              // Fallback — find partial match
-              for (const [key, val] of Object.entries(TEAM_MAP)) {
-                if (name.includes(key.split(" ").pop())) return val;
-              }
-              return { abbr: name.split(" ").pop().substring(0,3).toUpperCase(), color: "#888888" };
-            };
-
-            return {
-              key: game.id,
-              home: { abbr: homeAbbr, color: homeTeamData.color, rec: homeTeam },
-              away: { abbr: awayAbbr, color: awayTeamData.color, rec: awayTeam },
-              time: timeStr,
-              spread: homeAbbr + " " + spreadVal,
-              ou: "O/U " + totalVal,
-              conf: Math.floor(55 + Math.random() * 20),
-              pick: spreadVal !== "PK" ? homeAbbr + " " + spreadVal : homeAbbr + " ML",
-              edge: "+" + (1 + Math.random() * 3).toFixed(1) + " EDGE",
-              analysis: {
-                title: homeAbbr + " vs " + awayAbbr,
-                body: "Live game data loaded. <strong>" + homeTeam + " host " + awayTeam + "</strong> with the spread set at " + spreadVal + ". Total is " + totalVal + ". Ask UR TAKE for a full breakdown of this matchup.",
-                factors: [
-                  { color: "#00F5E9", text: "Spread: " + homeAbbr + " " + spreadVal },
-                  { color: "#F5C842", text: "Total: O/U " + totalVal },
-                  { color: "#00F5E9", text: "Game time: " + timeStr },
-                  { color: "#FF2D6B", text: "Ask UR TAKE for full AI analysis" },
-                ]
-              }
-            };
-          });
-          setLiveGames(transformed);
-          if (transformed.length > 0) setActiveGame(transformed[0].key);
-        }
-      } catch (err) {
-        setLiveError("Network error loading odds.");
+      if (!res.ok || data?.error || gamesArray.length === 0) {
+        setLiveError("Could not load live odds.");
         setLiveGames([]);
+        return;
       }
+
+      const TEAM_MAP = {
+        "Atlanta Hawks": { abbr: "ATL", color: "#E03A3E" },
+        "Boston Celtics": { abbr: "BOS", color: "#007A33" },
+        "Brooklyn Nets": { abbr: "BKN", color: "#6B6B6B" },
+        "Charlotte Hornets": { abbr: "CHA", color: "#1D1160" },
+        "Chicago Bulls": { abbr: "CHI", color: "#CE1141" },
+        "Cleveland Cavaliers": { abbr: "CLE", color: "#860038" },
+        "Dallas Mavericks": { abbr: "DAL", color: "#00538C" },
+        "Denver Nuggets": { abbr: "DEN", color: "#0E2240" },
+        "Detroit Pistons": { abbr: "DET", color: "#C8102E" },
+        "Golden State Warriors": { abbr: "GSW", color: "#1D428A" },
+        "Houston Rockets": { abbr: "HOU", color: "#CE1141" },
+        "Indiana Pacers": { abbr: "IND", color: "#002D62" },
+        "Los Angeles Clippers": { abbr: "LAC", color: "#C8102E" },
+        "Los Angeles Lakers": { abbr: "LAL", color: "#552583" },
+        "Memphis Grizzlies": { abbr: "MEM", color: "#5D76A9" },
+        "Miami Heat": { abbr: "MIA", color: "#98002E" },
+        "Milwaukee Bucks": { abbr: "MIL", color: "#00471B" },
+        "Minnesota Timberwolves": { abbr: "MIN", color: "#236192" },
+        "New Orleans Pelicans": { abbr: "NOP", color: "#0C2340" },
+        "New York Knicks": { abbr: "NYK", color: "#006BB6" },
+        "Oklahoma City Thunder": { abbr: "OKC", color: "#007AC1" },
+        "Orlando Magic": { abbr: "ORL", color: "#0077C0" },
+        "Philadelphia 76ers": { abbr: "PHI", color: "#006BB6" },
+        "Phoenix Suns": { abbr: "PHX", color: "#1D1160" },
+        "Portland Trail Blazers": { abbr: "POR", color: "#E03A3E" },
+        "Sacramento Kings": { abbr: "SAC", color: "#5A2D81" },
+        "San Antonio Spurs": { abbr: "SAS", color: "#8A8D8F" },
+        "Toronto Raptors": { abbr: "TOR", color: "#CE1141" },
+        "Utah Jazz": { abbr: "UTA", color: "#002B5C" },
+        "Washington Wizards": { abbr: "WAS", color: "#002B5C" },
+      };
+
+      const getTeam = (name) => {
+        if (TEAM_MAP[name]) return TEAM_MAP[name];
+        for (const [key, val] of Object.entries(TEAM_MAP)) {
+          if (name.includes(key.split(" ").pop())) return val;
+        }
+        return {
+          abbr: name.split(" ").pop().substring(0, 3).toUpperCase(),
+          color: "#888888"
+        };
+      };
+
+      const transformed = gamesArray.slice(0, 5).map((game, i) => {
+        const spread = game.bookmakers?.[0]?.markets?.find(m => m.key === "spreads");
+        const total = game.bookmakers?.[0]?.markets?.find(m => m.key === "totals");
+
+        const homeTeam = game.home_team;
+        const awayTeam = game.away_team;
+
+        const homeTeamData = getTeam(homeTeam);
+        const awayTeamData = getTeam(awayTeam);
+
+        const homeAbbr = homeTeamData.abbr;
+        const awayAbbr = awayTeamData.abbr;
+
+        const spreadOutcome = spread?.outcomes?.find(o => o.name === homeTeam);
+        const spreadVal = spreadOutcome
+          ? (spreadOutcome.point > 0 ? "+" : "") + spreadOutcome.point
+          : "PK";
+
+        const totalVal = total?.outcomes?.[0]?.point || "—";
+
+        const gameTime = new Date(game.commence_time);
+        const timeStr =
+          gameTime.toLocaleTimeString([], {
+            hour: "2-digit",
+            minute: "2-digit"
+          }) + " ET";
+
+        return {
+          key: game.id || `${homeAbbr}-${awayAbbr}-${i}`,
+          home: { abbr: homeAbbr, color: homeTeamData.color, rec: homeTeam },
+          away: { abbr: awayAbbr, color: awayTeamData.color, rec: awayTeam },
+          time: timeStr,
+          spread: homeAbbr + " " + spreadVal,
+          ou: "O/U " + totalVal,
+          conf: Math.floor(55 + Math.random() * 20),
+          pick: spreadVal !== "PK" ? homeAbbr + " " + spreadVal : homeAbbr + " ML",
+          edge: "+" + (1 + Math.random() * 3).toFixed(1) + " EDGE",
+          analysis: {
+            title: homeAbbr + " vs " + awayAbbr,
+            body:
+              "Live game data loaded. <strong>" +
+              homeTeam +
+              " host " +
+              awayTeam +
+              "</strong> with the spread set at " +
+              spreadVal +
+              ". Total is " +
+              totalVal +
+              ". Ask UR TAKE for a full breakdown of this matchup.",
+            factors: [
+              { color: "#00F5E9", text: "Spread: " + homeAbbr + " " + spreadVal },
+              { color: "#F5C842", text: "Total: O/U " + totalVal },
+              { color: "#00F5E9", text: "Game time: " + timeStr },
+              { color: "#FF2D6B", text: "Ask UR TAKE for full AI analysis" },
+            ]
+          }
+        };
+      });
+
+      setLiveGames(transformed);
+      if (transformed.length > 0) {
+        setActiveGame(transformed[0].key);
+      }
+    } catch (err) {
+      console.error("Error loading odds:", err);
+      setLiveError("Network error loading odds.");
+      setLiveGames([]);
+    } finally {
       setLiveLoading(false);
     }
-    fetchOdds();
-  }, [activeSport]);
+  }
+
+  fetchOdds();
+}, [activeSport]);
 
   // Use live games if available, fall back to hardcoded
   const displayGames = liveGames.length > 0 ? liveGames : GAMES;
