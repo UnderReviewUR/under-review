@@ -703,8 +703,7 @@ export default function App() {
       setLiveLoading(true);
       setLiveError(null);
       try {
-        const baseUrl = window.location.origin;
-        const res = await fetch(`${baseUrl}/api/odds?sport=${activeSport}`);
+        const res = await fetch(`/api/odds?sport=${activeSport}`);
         const data = await res.json();
         if (data.error) {
           setLiveError("Could not load live odds.");
