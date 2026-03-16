@@ -854,7 +854,6 @@ if (gamesArray.length === 0) {
   console.error("Odds fetch crashed:", err);
   setLiveError("Network error connecting to odds service.");
   setLiveGames([]);
-}
     } finally {
       setLiveLoading(false);
     }
