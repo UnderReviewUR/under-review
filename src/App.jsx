@@ -944,7 +944,8 @@ if (gamesArray.length === 0) {
   setActiveGame(null);
   setLiveLoading(false);
   setLiveError(null);
-  fetchNflProps();
+ fetchNflProps();
+}
 }, [activeSport]);
 
   // Use live games if available, fall back to hardcoded
@@ -1015,9 +1016,8 @@ if (gamesArray.length === 0) {
           <div className="slate-hdr">
   <div>
     <div className="slate-title">
-      {activeSport === "basketball_nba" ? "TONIGHT'S " : activeSport.includes("tennis") ? "TODAY'S " : "SEASON "}
-<span>{activeSport === "basketball_nba" ? "SLATE" : activeSport.includes("tennis") ? "MATCHES" : "PROJECTIONS"}</span>
-
+      <span>{activeSport === "basketball_nba" ? "SLATE" : activeSport.includes("tennis") ? "MATCHES" : "PROJECTIONS"}</span>
+    </div>
     <div style={{ marginTop: "10px" }}>
       <select
         value={activeSport}
@@ -1203,7 +1203,7 @@ if (gamesArray.length === 0) {
             <div className="chat-topbar">
               <button className="chat-back" onClick={()=>setView("slate")}>← SLATE</button>
               <div className="chat-title">UR TAKE</div>
-              <div className="chat-sub">   {activeSport === "basketball_nba" ? "NBA · TODAY" : "NFL · SEASON"} </div>
+              <div className="chat-sub">   {activeSport === "basketball_nba" ? "NBA · TODAY" : activeSport.includes("tennis") ? (activeSport.includes("wta") ? "WTA · MIAMI" : "ATP · MIAMI") : "NFL · SEASON"} </div>
             </div>
 
             <div className="cap-bar">
