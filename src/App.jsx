@@ -686,71 +686,27 @@ export default function App() {
   const [typing, setTyping] = useState(false);
   const [queriesUsed, setQueriesUsed] = useState(0);
   const [showUpgrade, setShowUpgrade] = useState(false);
- const [liveGames, setLiveGames] = useState([]);
-const [liveProps, setLiveProps] = useState([]);
-const [liveLoading, setLiveLoading] = useState(true);
-const [liveError, setLiveError] = useState(null);
-const [activeSport, setActiveSport] = useState("basketball_nba");
+   const [liveGames, setLiveGames] = useState([]);
+  const [modelProps, setModelProps] = useState([]);
+  const [liveLoading, setLiveLoading] = useState(true);
+  const [liveError, setLiveError] = useState(null);
+  const [activeSport, setActiveSport] = useState("basketball_nba");
   const DAILY_LIMIT = 3;
   const messagesEnd = useRef(null);
   const inputRef = useRef(null);
 
   const queriesLeft = DAILY_LIMIT - queriesUsed;
   const hoursUntilReset = 24 - new Date().getHours();
-async function fetchProps(eventId) {
-  try {
-    const res = await fetch(`/api/odds?eventId=${eventId}&sport=${activeSport}`);
-    const data = await res.json();
-
-    console.log("props response:", data);
-
-    const markets = data?.bookmakers?.[0]?.markets || [];
-    const props = [];
-
-    markets.forEach((market) => {
-      if (market.key === "player_points") {
-        market.outcomes.forEach((outcome) => {
-          props.push({
-            player: outcome.name,
-            team: "LIVE",
-            line: outcome.point,
-            stat: "PTS",
-            dir: "over",
-          });
-        });
-      }
-
-      if (market.key === "player_rebounds") {
-        market.outcomes.forEach((outcome) => {
-          props.push({
-            player: outcome.name,
-            team: "LIVE",
-            line: outcome.point,
-            stat: "REB",
-            dir: "over",
-          });
-        });
-      }
-
-      if (market.key === "player_assists") {
-        market.outcomes.forEach((outcome) => {
-          props.push({
-            player: outcome.name,
-            team: "LIVE",
-            line: outcome.point,
-            stat: "AST",
-            dir: "over",
-          });
-        });
-      }
-    });
-
-    setLiveProps(props.slice(0, 12));
-  } catch (err) {
-    console.error("Error loading props:", err);
-    setLiveProps([]);
+  async function fetchModelProps() {
+    try {
+      const res = await fetch("/api/model-props");
+      const data = await res.json();
+      setModelProps(Array.isArray(data) ? data : []);
+    } catch (err) {
+      console.error("Error loading model props:", err);
+      setModelProps([]);
+    }
   }
-}
   // Fetch live odds on mount and sport change
   useEffect(() => {
   async function fetchOdds() {
@@ -890,11 +846,10 @@ if (gamesArray.length === 0) {
         };
       });
 
-      setLiveGames(transformed);
-if (transformed.length > 0) {
-  setActiveGame(transformed[0].key);
-  fetchProps(transformed[0].key);
-}
+            setLiveGames(transformed);
+      if (transformed.length > 0) {
+        setActiveGame(transformed[0].key);
+      }
     } catch (err) {
   console.error("Odds fetch crashed:", err);
   setLiveError("Network error connecting to odds service.");
@@ -905,7 +860,8 @@ if (transformed.length > 0) {
     }
   }
 
-  fetchOdds();
+    fetchOdds();
+  fetchModelProps();
 }, [activeSport]);
 
   // Use live games if available, fall back to hardcoded
@@ -990,10 +946,10 @@ if (transformed.length > 0) {
             )}
             {displayGames.map(g => (
                 <div key={g.key}>
-                  <div className={`gc${activeGame===g.key?" active":""}`} onClick={() => {
-  setActiveGame(g.key);
-  fetchProps(g.key);
-}}>
+                                  <div
+                    className={`gc${activeGame===g.key?" active":""}`}
+                    onClick={() => setActiveGame(g.key)}
+                  >
                     <div className="gc-top">
                       <div className="teams">
                         <div className="tb">
@@ -1043,11 +999,17 @@ if (transformed.length > 0) {
                 </div>
               ))}
 
-              <div className="props-title">PLAYER PROPS — TONIGHT</div>
-              <div className="props-title">PLAYER PROPS — TONIGHT</div> <div style={{color:"white", marginBottom:"10px"}}>Live props count: {liveProps.length}</div> {liveProps.map((p,i)=>(
+                           <div className="props-title">UR MODEL PROPS — TONIGHT</div>
+              {(modelProps.length > 0 ? modelProps : PROPS).map((p, i) => (
                 <div key={i} className="pr">
-                  <div><div className="pp">{p.player}</div><div className="pt">{p.team}</div></div>
-                  <div className="pln"><span>{p.stat}</span>{p.line}</div>
+                  <div>
+                    <div className="pp">{p.player}</div>
+                    <div className="pt">{p.team}</div>
+                  </div>
+                  <div className="pln">
+                    <span>{p.stat}</span>
+                    {p.line}
+                  </div>
                   <div className={`pd ${p.dir}`}>{p.dir.toUpperCase()}</div>
                 </div>
               ))}
