@@ -888,57 +888,73 @@ if (gamesArray.length === 0) {
   setLiveLoading(true);
   setLiveError(null);
   const tour = activeSport.includes("wta") ? "wta" : "atp";
-  fetch(`/api/tennis?tour=${tour}`)
-    .then(r => r.json())
-    .then(data => {
-      if (!Array.isArray(data) || data.length === 0) {
-        setLiveError("No matches available right now.");
-        setLiveLoading(false);
-        return;
-      }
-      const transformed = data.slice(0, 8).map((match, i) => {
-        const p1 = match.home_team;
-        const p2 = match.away_team;
-        const p1Last = p1.split(" ").pop();
-        const p2Last = p2.split(" ").pop();
-        const h2h = match.bookmakers?.[0]?.markets?.find(m => m.key === "h2h");
-        const p1Odds = h2h?.outcomes?.find(o => o.name === p1)?.price || "N/A";
-        const p2Odds = h2h?.outcomes?.find(o => o.name === p2)?.price || "N/A";
-        const favorite = p1Odds !== "N/A" && p2Odds !== "N/A"
-          ? (Math.abs(p1Odds) > Math.abs(p2Odds) ? p2Last : p1Last)
-          : p1Last;
-        const gameTime = new Date(match.commence_time);
-        const timeStr = gameTime.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) + " ET";
-        return {
-          key: match.id || `${p1Last}-${p2Last}-${i}`,
-          home: { abbr: p1Last.substring(0,6).toUpperCase(), color: "#00F5E9", rec: p1 },
-          away: { abbr: p2Last.substring(0,6).toUpperCase(), color: "#FF2D6B", rec: p2 },
-          time: timeStr,
-          spread: favorite + " ML",
-          ou: p1Odds !== "N/A" ? (p1Odds > 0 ? "+" + p1Odds : String(p1Odds)) : "N/A",
-          conf: Math.floor(55 + Math.random() * 20),
-          pick: favorite + " to win",
-          edge: "+" + (0.5 + Math.random() * 2).toFixed(1) + " EDGE",
-          analysis: {
-            title: p1Last + " vs " + p2Last,
-            body: "<strong>" + p1 + "</strong> vs <strong>" + p2 + "</strong>. Match winner odds: " + p1Last + " " + (p1Odds > 0 ? "+" + p1Odds : p1Odds) + " · " + p2Last + " " + (p2Odds > 0 ? "+" + p2Odds : p2Odds) + ". Ask UR TAKE for a full breakdown.",
-            factors: [
-              { color: "#00F5E9", text: p1 + " odds: " + (p1Odds > 0 ? "+" + p1Odds : p1Odds) },
-              { color: "#FF2D6B", text: p2 + " odds: " + (p2Odds > 0 ? "+" + p2Odds : p2Odds) },
-              { color: "#F5C842", text: "Game time: " + timeStr },
-              { color: "#FF2D6B", text: "Ask UR TAKE for full match analysis" },
-            ]
-          }
-        };
-      });
-      setLiveGames(transformed);
-      if (transformed.length > 0) setActiveGame(transformed[0].key);
+  Promise.all([
+    fetch(`/api/tennis?tour=${tour}`).then(r => r.json()),
+    fetch(`/api/tennis-players`).then(r => r.json()),
+  ])
+  .then(([matchData, playerData]) => {
+    if (!Array.isArray(matchData) || matchData.length === 0) {
+      setLiveError("No matches available right now.");
       setLiveLoading(false);
-    })
-    .catch(() => {
-      setLiveError("Could not load tennis matches.");
-      setLiveLoading(false);
+      return;
+    }
+    const players = tour === "wta" ? playerData.wta : playerData.atp;
+    const surface = playerData.surfaces?.[activeSport];
+    const transformed = matchData.slice(0, 8).map((match, i) => {
+      const p1 = match.home_team;
+      const p2 = match.away_team;
+      const p1Last = p1.split(" ").pop();
+      const p2Last = p2.split(" ").pop();
+      const h2h = match.bookmakers?.[0]?.markets?.find(m => m.key === "h2h");
+      const p1Odds = h2h?.outcomes?.find(o => o.name === p1)?.price || "N/A";
+      const p2Odds = h2h?.outcomes?.find(o => o.name === p2)?.price || "N/A";
+      const p1Data = players?.[p1Last] || null;
+      const p2Data = players?.[p2Last] || null;
+      const surfaceKey = surface?.surface === "Clay" ? "clay" : surface?.surface === "Grass" ? "grass" : "hard";
+      const favorite = p1Odds !== "N/A" && p2Odds !== "N/A"
+        ? (Math.abs(p1Odds) > Math.abs(p2Odds) ? p2Last : p1Last)
+        : p1Last;
+      const gameTime = new Date(match.commence_time);
+      const timeStr = gameTime.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) + " ET";
+      const impliedP1 = p1Odds !== "N/A" ? (p1Odds < 0 ? Math.abs(p1Odds) / (Math.abs(p1Odds) + 100) * 100 : 100 / (p1Odds + 100) * 100).toFixed(0) : null;
+      const impliedP2 = p2Odds !== "N/A" ? (p2Odds < 0 ? Math.abs(p2Odds) / (Math.abs(p2Odds) + 100) * 100 : 100 / (p2Odds + 100) * 100).toFixed(0) : null;
+      const buildNote = (pData, pLast, surfKey) => {
+        if (!pData) return pLast + " — match data loaded.";
+        const sNote = pData.surfaceNote?.[surfKey] || "";
+        const mNote = pData.miamiNote || "";
+        return (mNote || sNote) ? (mNote || sNote) : pLast + " — " + (pData.style || "");
+      };
+      const body = "<strong>" + p1 + "</strong> vs <strong>" + p2 + "</strong><br/><br/>" +
+        (p1Data ? "<strong>" + p1Last + ":</strong> " + buildNote(p1Data, p1Last, surfaceKey) + "<br/><br/>" : "") +
+        (p2Data ? "<strong>" + p2Last + ":</strong> " + buildNote(p2Data, p2Last, surfaceKey) : "") +
+        (surface ? "<br/><br/><em>Surface: " + surface.name + " · " + surface.speed + " — " + surface.note + "</em>" : "");
+      const factors = [
+        { color: "#00F5E9", text: p1 + " odds: " + (p1Odds > 0 ? "+" + p1Odds : p1Odds) + (impliedP1 ? " (" + impliedP1 + "% implied)" : "") },
+        { color: "#FF2D6B", text: p2 + " odds: " + (p2Odds > 0 ? "+" + p2Odds : p2Odds) + (impliedP2 ? " (" + impliedP2 + "% implied)" : "") },
+        p1Data ? { color: "#F5C842", text: p1Last + " style: " + (p1Data.style || "—") } : { color: "#F5C842", text: "Game time: " + timeStr },
+        p2Data ? { color: "#F5C842", text: p2Last + " style: " + (p2Data.style || "—") } : { color: "#5A6070", text: "Ask UR TAKE for full match analysis" },
+      ];
+      return {
+        key: match.id || `${p1Last}-${p2Last}-${i}`,
+        home: { abbr: p1Last.substring(0, 6).toUpperCase(), color: "#00F5E9", rec: p1 },
+        away: { abbr: p2Last.substring(0, 6).toUpperCase(), color: "#FF2D6B", rec: p2 },
+        time: timeStr,
+        spread: favorite + " favored",
+        ou: surface ? surface.surface + " · " + surface.speed : "Hard",
+        conf: Math.floor(55 + Math.random() * 20),
+        pick: favorite + " ML",
+        edge: "+" + (0.5 + Math.random() * 2).toFixed(1) + " EDGE",
+        analysis: { title: p1Last + " vs " + p2Last, body, factors }
+      };
     });
+    setLiveGames(transformed);
+    if (transformed.length > 0) setActiveGame(transformed[0].key);
+    setLiveLoading(false);
+  })
+  .catch(() => {
+    setLiveError("Could not load tennis matches.");
+    setLiveLoading(false);
+  });
 } else if (activeSport === "americanfootball_nfl") {
   setLiveGames([]);
   setActiveGame(null);
