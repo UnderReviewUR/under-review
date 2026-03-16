@@ -703,8 +703,7 @@ export default function App() {
       setLiveLoading(true);
       setLiveError(null);
       try {
-        const apiKey = "67f568bb03813b74c081b3a5e3b61171";
-        const res = await fetch(`https://api.the-odds-api.com/v4/sports/${activeSport}/odds/?apiKey=${apiKey}&regions=us&markets=h2h,spreads,totals&oddsFormat=american`);
+        const res = await fetch(`/api/odds?sport=${activeSport}`);
         const data = await res.json();
         if (data.error || !Array.isArray(data)) {
           setLiveError("Could not load live odds.");
