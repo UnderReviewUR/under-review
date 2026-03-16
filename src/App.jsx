@@ -928,10 +928,35 @@ if (gamesArray.length === 0) {
         {view === "slate" && (
           <div className="view">
             <div className="slate-scroll">
-              <div className="slate-hdr">
-                <div className="slate-title">TONIGHT'S <span>SLATE</span></div>
-                <div className="ai-tag">AI POWERED</div>
-              </div>
+          <div className="slate-hdr">
+  <div>
+    <div className="slate-title">
+      {activeSport === "basketball_nba" ? "TONIGHT'S " : "SEASON "}
+      <span>{activeSport === "basketball_nba" ? "SLATE" : "PROJECTIONS"}</span>
+    </div>
+
+    <div style={{ marginTop: "10px" }}>
+      <select
+        value={activeSport}
+        onChange={(e) => setActiveSport(e.target.value)}
+        style={{
+          background: "#0F1215",
+          color: "#E8EAF0",
+          border: "1px solid #1E2328",
+          padding: "8px 10px",
+          fontFamily: "DM Mono, monospace",
+          fontSize: "11px",
+          letterSpacing: "1px"
+        }}
+      >
+        <option value="basketball_nba">NBA</option>
+        <option value="americanfootball_nfl">NFL</option>
+      </select>
+    </div>
+  </div>
+
+  <div className="ai-tag">AI POWERED</div>
+</div>
 
               {liveLoading && (
               <div style={{padding:"20px",textAlign:"center",fontFamily:"DM Mono,monospace",fontSize:"11px",color:"var(--muted)",letterSpacing:"2px"}}>
@@ -943,7 +968,7 @@ if (gamesArray.length === 0) {
                 {liveError} — showing demo data
               </div>
             )}
-            {displayGames.map(g => (
+            {activeSport === "basketball_nba" && displayGames.map(g => (
                 <div key={g.key}>
                                   <div
                     className={`gc${activeGame===g.key?" active":""}`}
@@ -997,21 +1022,90 @@ if (gamesArray.length === 0) {
                   )}
                 </div>
               ))}
+{activeSport === "americanfootball_nfl" && (
+  <div style={{ marginTop: "10px" }}>
+    <div className="props-title">QB PROJECTIONS</div>
+    {[
+      { player: "Patrick Mahomes", team: "KC", line: "4650", stat: "PASS YDS", dir: "over" },
+      { player: "Josh Allen", team: "BUF", line: "4300", stat: "PASS YDS", dir: "over" },
+      { player: "Joe Burrow", team: "CIN", line: "4400", stat: "PASS YDS", dir: "over" },
+      { player: "C.J. Stroud", team: "HOU", line: "4100", stat: "PASS YDS", dir: "over" },
+      { player: "Lamar Jackson", team: "BAL", line: "3850", stat: "PASS YDS", dir: "over" },
+    ].map((p, i) => (
+      <div key={i} className="pr">
+        <div>
+          <div className="pp">{p.player}</div>
+          <div className="pt">{p.team}</div>
+        </div>
+        <div className="pln">
+          <span>{p.stat}</span>
+          {p.line}
+        </div>
+        <div className={`pd ${p.dir}`}>{p.dir.toUpperCase()}</div>
+      </div>
+    ))}
 
-                           <div className="props-title">UR MODEL PROPS — TONIGHT</div>
-              {(modelProps.length > 0 ? modelProps : PROPS).map((p, i) => (
-                <div key={i} className="pr">
-                  <div>
-                    <div className="pp">{p.player}</div>
-                    <div className="pt">{p.team}</div>
-                  </div>
-                  <div className="pln">
-                    <span>{p.stat}</span>
-                    {p.line}
-                  </div>
-                  <div className={`pd ${p.dir}`}>{p.dir.toUpperCase()}</div>
-                </div>
-              ))}
+    <div className="props-title">RB PROJECTIONS</div>
+    {[
+      { player: "Christian McCaffrey", team: "SF", line: "1325", stat: "RUSH YDS", dir: "over" },
+      { player: "Bijan Robinson", team: "ATL", line: "1210", stat: "RUSH YDS", dir: "over" },
+      { player: "Breece Hall", team: "NYJ", line: "1180", stat: "RUSH YDS", dir: "over" },
+      { player: "Jonathan Taylor", team: "IND", line: "1140", stat: "RUSH YDS", dir: "over" },
+      { player: "Saquon Barkley", team: "PHI", line: "1090", stat: "RUSH YDS", dir: "over" },
+    ].map((p, i) => (
+      <div key={i} className="pr">
+        <div>
+          <div className="pp">{p.player}</div>
+          <div className="pt">{p.team}</div>
+        </div>
+        <div className="pln">
+          <span>{p.stat}</span>
+          {p.line}
+        </div>
+        <div className={`pd ${p.dir}`}>{p.dir.toUpperCase()}</div>
+      </div>
+    ))}
+
+    <div className="props-title">WR PROJECTIONS</div>
+    {[
+      { player: "Justin Jefferson", team: "MIN", line: "1480", stat: "REC YDS", dir: "over" },
+      { player: "CeeDee Lamb", team: "DAL", line: "1450", stat: "REC YDS", dir: "over" },
+      { player: "Ja'Marr Chase", team: "CIN", line: "1390", stat: "REC YDS", dir: "over" },
+      { player: "Amon-Ra St. Brown", team: "DET", line: "1360", stat: "REC YDS", dir: "over" },
+      { player: "A.J. Brown", team: "PHI", line: "1310", stat: "REC YDS", dir: "over" },
+    ].map((p, i) => (
+      <div key={i} className="pr">
+        <div>
+          <div className="pp">{p.player}</div>
+          <div className="pt">{p.team}</div>
+        </div>
+        <div className="pln">
+          <span>{p.stat}</span>
+          {p.line}
+        </div>
+        <div className={`pd ${p.dir}`}>{p.dir.toUpperCase()}</div>
+      </div>
+    ))}
+  </div>
+)}
+                      {activeSport === "basketball_nba" && (
+  <>
+    <div className="props-title">UR MODEL PROPS — TONIGHT</div>
+    {(modelProps.length > 0 ? modelProps : PROPS).map((p, i) => (
+      <div key={i} className="pr">
+        <div>
+          <div className="pp">{p.player}</div>
+          <div className="pt">{p.team}</div>
+        </div>
+        <div className="pln">
+          <span>{p.stat}</span>
+          {p.line}
+        </div>
+        <div className={`pd ${p.dir}`}>{p.dir.toUpperCase()}</div>
+      </div>
+    ))}
+  </>
+)}
 
               <div className="parlay-box">
                 <div className="parlay-title">PARLAY OF THE DAY</div>
