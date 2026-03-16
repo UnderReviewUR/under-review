@@ -1044,7 +1044,7 @@ if (transformed.length > 0) {
               ))}
 
               <div className="props-title">PLAYER PROPS — TONIGHT</div>
-              {(liveProps.length > 0 ? liveProps : PROPS).map((p,i)=>(
+              <div className="props-title">PLAYER PROPS — TONIGHT</div> <div style={{color:"white", marginBottom:"10px"}}>Live props count: {liveProps.length}</div> {liveProps.map((p,i)=>(
                 <div key={i} className="pr">
                   <div><div className="pp">{p.player}</div><div className="pt">{p.team}</div></div>
                   <div className="pln"><span>{p.stat}</span>{p.line}</div>
