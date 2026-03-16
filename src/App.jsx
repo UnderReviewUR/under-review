@@ -705,12 +705,12 @@ export default function App() {
       try {
         const res = await fetch(`/api/odds?sport=${activeSport}`);
         const data = await res.json();
-        if (data.error || !Array.isArray(data)) {
+        if (data.error) {
           setLiveError("Could not load live odds.");
           setLiveGames([]);
         } else {
           // Transform API data into our game format
-          const transformed = data.slice(0, 5).map((game, i) => {
+          const transformed = (Array.isArray(data) ? data : []).slice(0, 5).map((game, i) => {
             const h2h = game.bookmakers?.[0]?.markets?.find(m => m.key === "h2h");
             const spread = game.bookmakers?.[0]?.markets?.find(m => m.key === "spreads");
             const total = game.bookmakers?.[0]?.markets?.find(m => m.key === "totals");
