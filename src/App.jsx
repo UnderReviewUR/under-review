@@ -699,7 +699,7 @@ const [activeSport, setActiveSport] = useState("basketball_nba");
   const hoursUntilReset = 24 - new Date().getHours();
 async function fetchProps(eventId) {
   try {
-    const res = await fetch(`/api/odds?eventId=${eventId}`);
+    const res = await fetch(`/api/odds?eventId=${eventId}&sport=${activeSport}`);
     const data = await res.json();
 
     console.log("props response:", data);
