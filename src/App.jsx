@@ -717,8 +717,10 @@ export default function App() {
 
             const homeTeam = game.home_team;
             const awayTeam = game.away_team;
-            const homeAbbr = homeTeam.split(" ").pop().substring(0, 3).toUpperCase();
-            const awayAbbr = awayTeam.split(" ").pop().substring(0, 3).toUpperCase();
+            const homeTeamData = getTeam(homeTeam);
+            const awayTeamData = getTeam(awayTeam);
+            const homeAbbr = homeTeamData.abbr;
+            const awayAbbr = awayTeamData.abbr;
 
             const spreadOutcome = spread?.outcomes?.find(o => o.name === homeTeam);
             const spreadVal = spreadOutcome ? (spreadOutcome.point > 0 ? "+" : "") + spreadOutcome.point : "PK";
@@ -727,30 +729,52 @@ export default function App() {
             const gameTime = new Date(game.commence_time);
             const timeStr = gameTime.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) + " ET";
 
-            const TEAM_COLORS = {
-              "Lakers": "#552583", "Celtics": "#007A33", "Warriors": "#1D428A",
-              "Heat": "#98002E", "Nuggets": "#0E2240", "Knicks": "#006BB6",
-              "Thunder": "#007AC1", "Bucks": "#00471B", "Nets": "#000000",
-              "Clippers": "#C8102E", "Suns": "#1D1160", "Mavericks": "#00538C",
-              "Bulls": "#CE1141", "76ers": "#006BB6", "Raptors": "#CE1141",
-              "Cavaliers": "#860038", "Hawks": "#E03A3E", "Pacers": "#002D62",
-              "Wizards": "#002B5C", "Hornets": "#1D1160", "Pistons": "#C8102E",
-              "Magic": "#0077C0", "Spurs": "#C4CED4", "Rockets": "#CE1141",
-              "Grizzlies": "#5D76A9", "Pelicans": "#0C2340", "Jazz": "#002B5C",
-              "Trail Blazers": "#E03A3E", "Kings": "#5A2D81", "Timberwolves": "#0C2340",
+            const TEAM_MAP = {
+              "Atlanta Hawks":        { abbr: "ATL", color: "#E03A3E" },
+              "Boston Celtics":       { abbr: "BOS", color: "#007A33" },
+              "Brooklyn Nets":        { abbr: "BKN", color: "#6B6B6B" },
+              "Charlotte Hornets":    { abbr: "CHA", color: "#1D1160" },
+              "Chicago Bulls":        { abbr: "CHI", color: "#CE1141" },
+              "Cleveland Cavaliers":  { abbr: "CLE", color: "#860038" },
+              "Dallas Mavericks":     { abbr: "DAL", color: "#00538C" },
+              "Denver Nuggets":       { abbr: "DEN", color: "#0E2240" },
+              "Detroit Pistons":      { abbr: "DET", color: "#C8102E" },
+              "Golden State Warriors":{ abbr: "GSW", color: "#1D428A" },
+              "Houston Rockets":      { abbr: "HOU", color: "#CE1141" },
+              "Indiana Pacers":       { abbr: "IND", color: "#002D62" },
+              "Los Angeles Clippers": { abbr: "LAC", color: "#C8102E" },
+              "Los Angeles Lakers":   { abbr: "LAL", color: "#552583" },
+              "Memphis Grizzlies":    { abbr: "MEM", color: "#5D76A9" },
+              "Miami Heat":           { abbr: "MIA", color: "#98002E" },
+              "Milwaukee Bucks":      { abbr: "MIL", color: "#00471B" },
+              "Minnesota Timberwolves":{ abbr: "MIN", color: "#236192" },
+              "New Orleans Pelicans": { abbr: "NOP", color: "#0C2340" },
+              "New York Knicks":      { abbr: "NYK", color: "#006BB6" },
+              "Oklahoma City Thunder":{ abbr: "OKC", color: "#007AC1" },
+              "Orlando Magic":        { abbr: "ORL", color: "#0077C0" },
+              "Philadelphia 76ers":   { abbr: "PHI", color: "#006BB6" },
+              "Phoenix Suns":         { abbr: "PHX", color: "#1D1160" },
+              "Portland Trail Blazers":{ abbr: "POR", color: "#E03A3E" },
+              "Sacramento Kings":     { abbr: "SAC", color: "#5A2D81" },
+              "San Antonio Spurs":    { abbr: "SAS", color: "#8A8D8F" },
+              "Toronto Raptors":      { abbr: "TOR", color: "#CE1141" },
+              "Utah Jazz":            { abbr: "UTA", color: "#002B5C" },
+              "Washington Wizards":   { abbr: "WAS", color: "#002B5C" },
             };
 
-            const getColor = (name) => {
-              for (const [key, val] of Object.entries(TEAM_COLORS)) {
-                if (name.includes(key)) return val;
+            const getTeam = (name) => {
+              if (TEAM_MAP[name]) return TEAM_MAP[name];
+              // Fallback — find partial match
+              for (const [key, val] of Object.entries(TEAM_MAP)) {
+                if (name.includes(key.split(" ").pop())) return val;
               }
-              return "#888888";
+              return { abbr: name.split(" ").pop().substring(0,3).toUpperCase(), color: "#888888" };
             };
 
             return {
               key: game.id,
-              home: { abbr: homeAbbr, color: getColor(homeTeam), rec: homeTeam },
-              away: { abbr: awayAbbr, color: getColor(awayTeam), rec: awayTeam },
+              home: { abbr: homeAbbr, color: homeTeamData.color, rec: homeTeam },
+              away: { abbr: awayAbbr, color: awayTeamData.color, rec: awayTeam },
               time: timeStr,
               spread: homeAbbr + " " + spreadVal,
               ou: "O/U " + totalVal,
