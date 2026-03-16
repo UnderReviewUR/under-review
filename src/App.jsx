@@ -707,7 +707,7 @@ export default function App() {
       const res = await fetch(`/api/odds?sport=${activeSport}`);
       const data = await res.json();
 
-      console.log("odds response:", JSON.stringify(data).slice(0, 300));
+      if (process.env.NODE_ENV === "development") {   console.log("odds response:", data); }
 
       const gamesArray =
         Array.isArray(data) ? data :
@@ -715,11 +715,23 @@ export default function App() {
         Array.isArray(data?.games) ? data.games :
         [];
 
-      if (!res.ok || data?.error || gamesArray.length === 0) {
-        setLiveError("Could not load live odds.");
-        setLiveGames([]);
-        return;
-      }
+      if (!res.ok) {
+  setLiveError("Odds API request failed.");
+  setLiveGames([]);
+  return;
+}
+
+if (data?.error) {
+  setLiveError("Odds API returned an error.");
+  setLiveGames([]);
+  return;
+}
+
+if (gamesArray.length === 0) {
+  setLiveError("No games available for this sport.");
+  setLiveGames([]);
+  return;
+}
 
       const TEAM_MAP = {
         "Atlanta Hawks": { abbr: "ATL", color: "#E03A3E" },
@@ -829,9 +841,10 @@ export default function App() {
         setActiveGame(transformed[0].key);
       }
     } catch (err) {
-      console.error("Error loading odds:", err);
-      setLiveError("Network error loading odds.");
-      setLiveGames([]);
+  console.error("Odds fetch crashed:", err);
+  setLiveError("Network error connecting to odds service.");
+  setLiveGames([]);
+}
     } finally {
       setLiveLoading(false);
     }
