@@ -686,27 +686,47 @@ export default function App() {
   const [typing, setTyping] = useState(false);
   const [queriesUsed, setQueriesUsed] = useState(0);
   const [showUpgrade, setShowUpgrade] = useState(false);
-   const [liveGames, setLiveGames] = useState([]);
-  const [modelProps, setModelProps] = useState([]);
-  const [liveLoading, setLiveLoading] = useState(true);
-  const [liveError, setLiveError] = useState(null);
-  const [activeSport, setActiveSport] = useState("basketball_nba");
+  const [liveGames, setLiveGames] = useState([]);
+const [modelProps, setModelProps] = useState([]);
+const [nflProps, setNflProps] = useState({
+  qbs: [],
+  rbs: [],
+  wrs: [],
+});
+const [liveLoading, setLiveLoading] = useState(true);
+const [liveError, setLiveError] = useState(null);
+const [activeSport, setActiveSport] = useState("basketball_nba");
   const DAILY_LIMIT = 3;
   const messagesEnd = useRef(null);
   const inputRef = useRef(null);
 
   const queriesLeft = DAILY_LIMIT - queriesUsed;
   const hoursUntilReset = 24 - new Date().getHours();
-  async function fetchModelProps() {
-    try {
-      const res = await fetch("/api/model-props");
-      const data = await res.json();
-      setModelProps(Array.isArray(data) ? data : []);
-    } catch (err) {
-      console.error("Error loading model props:", err);
-      setModelProps([]);
-    }
+ async function fetchModelProps() {
+  try {
+    const res = await fetch("/api/model-props");
+    const data = await res.json();
+    setModelProps(Array.isArray(data) ? data : []);
+  } catch (err) {
+    console.error("Error loading model props:", err);
+    setModelProps([]);
   }
+}
+  async function fetchNflProps() {
+  try {
+    const res = await fetch("/api/nfl-projections");
+    const data = await res.json();
+
+    setNflProps({
+      qbs: Array.isArray(data?.qbs) ? data.qbs : [],
+      rbs: Array.isArray(data?.rbs) ? data.rbs : [],
+      wrs: Array.isArray(data?.wrs) ? data.wrs : [],
+    });
+  } catch (err) {
+    console.error("Error loading NFL projections:", err);
+    setNflProps({ qbs: [], rbs: [], wrs: [] });
+  }
+}
   // Fetch live odds on mount and sport change
   useEffect(() => {
   async function fetchOdds() {
@@ -860,7 +880,8 @@ if (gamesArray.length === 0) {
   }
 
     fetchOdds();
-  fetchModelProps();
+fetchModelProps();
+fetchNflProps();
 }, [activeSport]);
 
   // Use live games if available, fall back to hardcoded
@@ -1026,14 +1047,8 @@ if (gamesArray.length === 0) {
 {activeSport === "americanfootball_nfl" && (
   <div style={{ marginTop: "10px" }}>
     <div className="props-title">QB PROJECTIONS</div>
-    {[
-      { player: "Patrick Mahomes", team: "KC", line: "4650", stat: "PASS YDS", dir: "over" },
-      { player: "Josh Allen", team: "BUF", line: "4300", stat: "PASS YDS", dir: "over" },
-      { player: "Joe Burrow", team: "CIN", line: "4400", stat: "PASS YDS", dir: "over" },
-      { player: "C.J. Stroud", team: "HOU", line: "4100", stat: "PASS YDS", dir: "over" },
-      { player: "Lamar Jackson", team: "BAL", line: "3850", stat: "PASS YDS", dir: "over" },
-    ].map((p, i) => (
-      <div key={i} className="pr">
+    {nflProps.qbs.map((p, i) => (
+      <div key={`qb-${i}`} className="pr">
         <div>
           <div className="pp">{p.player}</div>
           <div className="pt">{p.team}</div>
@@ -1047,14 +1062,8 @@ if (gamesArray.length === 0) {
     ))}
 
     <div className="props-title">RB PROJECTIONS</div>
-    {[
-      { player: "Christian McCaffrey", team: "SF", line: "1325", stat: "RUSH YDS", dir: "over" },
-      { player: "Bijan Robinson", team: "ATL", line: "1210", stat: "RUSH YDS", dir: "over" },
-      { player: "Breece Hall", team: "NYJ", line: "1180", stat: "RUSH YDS", dir: "over" },
-      { player: "Jonathan Taylor", team: "IND", line: "1140", stat: "RUSH YDS", dir: "over" },
-      { player: "Saquon Barkley", team: "PHI", line: "1090", stat: "RUSH YDS", dir: "over" },
-    ].map((p, i) => (
-      <div key={i} className="pr">
+    {nflProps.rbs.map((p, i) => (
+      <div key={`rb-${i}`} className="pr">
         <div>
           <div className="pp">{p.player}</div>
           <div className="pt">{p.team}</div>
@@ -1068,14 +1077,8 @@ if (gamesArray.length === 0) {
     ))}
 
     <div className="props-title">WR PROJECTIONS</div>
-    {[
-      { player: "Justin Jefferson", team: "MIN", line: "1480", stat: "REC YDS", dir: "over" },
-      { player: "CeeDee Lamb", team: "DAL", line: "1450", stat: "REC YDS", dir: "over" },
-      { player: "Ja'Marr Chase", team: "CIN", line: "1390", stat: "REC YDS", dir: "over" },
-      { player: "Amon-Ra St. Brown", team: "DET", line: "1360", stat: "REC YDS", dir: "over" },
-      { player: "A.J. Brown", team: "PHI", line: "1310", stat: "REC YDS", dir: "over" },
-    ].map((p, i) => (
-      <div key={i} className="pr">
+    {nflProps.wrs.map((p, i) => (
+      <div key={`wr-${i}`} className="pr">
         <div>
           <div className="pp">{p.player}</div>
           <div className="pt">{p.team}</div>
