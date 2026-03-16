@@ -8,8 +8,9 @@ export default async function handler(req, res) {
       { player: "Bam Adebayo", team: "MIA · C", line: "18.5", stat: "PTS", dir: "over" }
     ];
 
-    return res.status(200).json(props);
+    res.status(200).json(props);
+
   } catch (err) {
-    return res.status(500).json({ error: "Failed to build model props." });
+    res.status(500).json({ error: "Failed to build model props." });
   }
 }
