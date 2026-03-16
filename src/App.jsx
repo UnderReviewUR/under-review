@@ -686,17 +686,71 @@ export default function App() {
   const [typing, setTyping] = useState(false);
   const [queriesUsed, setQueriesUsed] = useState(0);
   const [showUpgrade, setShowUpgrade] = useState(false);
-  const [liveGames, setLiveGames] = useState([]);
-  const [liveLoading, setLiveLoading] = useState(true);
-  const [liveError, setLiveError] = useState(null);
-  const [activeSport, setActiveSport] = useState("basketball_nba");
+ const [liveGames, setLiveGames] = useState([]);
+const [liveProps, setLiveProps] = useState([]);
+const [liveLoading, setLiveLoading] = useState(true);
+const [liveError, setLiveError] = useState(null);
+const [activeSport, setActiveSport] = useState("basketball_nba");
   const DAILY_LIMIT = 3;
   const messagesEnd = useRef(null);
   const inputRef = useRef(null);
 
   const queriesLeft = DAILY_LIMIT - queriesUsed;
   const hoursUntilReset = 24 - new Date().getHours();
+async function fetchProps(eventId) {
+  try {
+    const res = await fetch(`/api/odds?eventId=${eventId}`);
+    const data = await res.json();
 
+    console.log("props response:", data);
+
+    const markets = data?.bookmakers?.[0]?.markets || [];
+    const props = [];
+
+    markets.forEach((market) => {
+      if (market.key === "player_points") {
+        market.outcomes.forEach((outcome) => {
+          props.push({
+            player: outcome.name,
+            team: "LIVE",
+            line: outcome.point,
+            stat: "PTS",
+            dir: "over",
+          });
+        });
+      }
+
+      if (market.key === "player_rebounds") {
+        market.outcomes.forEach((outcome) => {
+          props.push({
+            player: outcome.name,
+            team: "LIVE",
+            line: outcome.point,
+            stat: "REB",
+            dir: "over",
+          });
+        });
+      }
+
+      if (market.key === "player_assists") {
+        market.outcomes.forEach((outcome) => {
+          props.push({
+            player: outcome.name,
+            team: "LIVE",
+            line: outcome.point,
+            stat: "AST",
+            dir: "over",
+          });
+        });
+      }
+    });
+
+    setLiveProps(props.slice(0, 12));
+  } catch (err) {
+    console.error("Error loading props:", err);
+    setLiveProps([]);
+  }
+}
   // Fetch live odds on mount and sport change
   useEffect(() => {
   async function fetchOdds() {
@@ -837,9 +891,10 @@ if (gamesArray.length === 0) {
       });
 
       setLiveGames(transformed);
-      if (transformed.length > 0) {
-        setActiveGame(transformed[0].key);
-      }
+if (transformed.length > 0) {
+  setActiveGame(transformed[0].key);
+  fetchProps(transformed[0].key);
+}
     } catch (err) {
   console.error("Odds fetch crashed:", err);
   setLiveError("Network error connecting to odds service.");
@@ -935,7 +990,10 @@ if (gamesArray.length === 0) {
             )}
             {displayGames.map(g => (
                 <div key={g.key}>
-                  <div className={`gc${activeGame===g.key?" active":""}`} onClick={()=>setActiveGame(g.key)}>
+                  <div className={`gc${activeGame===g.key?" active":""}`} onClick={() => {
+  setActiveGame(g.key);
+  fetchProps(g.key);
+}}>
                     <div className="gc-top">
                       <div className="teams">
                         <div className="tb">
@@ -986,7 +1044,7 @@ if (gamesArray.length === 0) {
               ))}
 
               <div className="props-title">PLAYER PROPS — TONIGHT</div>
-              {PROPS.map((p,i)=>(
+              {(liveProps.length > 0 ? liveProps : PROPS).map((p,i)=>(
                 <div key={i} className="pr">
                   <div><div className="pp">{p.player}</div><div className="pt">{p.team}</div></div>
                   <div className="pln"><span>{p.stat}</span>{p.line}</div>
