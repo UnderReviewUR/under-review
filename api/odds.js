@@ -7,7 +7,7 @@ export default async function handler(req, res) {
     return res.status(200).end();
   }
 
-  const { sport } = req.query;
+  const { sport, eventId } = req.query;
   const sportKey = sport || 'basketball_nba';
   const apiKey = process.env.ODDS_API_KEY;
 
@@ -16,11 +16,18 @@ export default async function handler(req, res) {
   }
 
   try {
-    const response = await fetch(
-      `https://api.the-odds-api.com/v4/sports/${sportKey}/odds/?apiKey=${apiKey}&regions=us&markets=h2h,spreads,totals&oddsFormat=american`
-    );
+    let url;
+
+    if (eventId) {
+      url = `https://api.the-odds-api.com/v4/sports/${sportKey}/events/${eventId}/odds/?apiKey=${apiKey}&regions=us&markets=player_points,player_rebounds,player_assists&oddsFormat=american`;
+    } else {
+      url = `https://api.the-odds-api.com/v4/sports/${sportKey}/odds/?apiKey=${apiKey}&regions=us&markets=h2h,spreads,totals&oddsFormat=american`;
+    }
+
+    const response = await fetch(url);
     const data = await response.json();
-    return res.status(200).json(data);
+
+    return res.status(response.status).json(data);
   } catch (err) {
     return res.status(500).json({ error: err.message });
   }
