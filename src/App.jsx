@@ -911,13 +911,26 @@ if (gamesArray.length === 0) {
       const p1Data = players?.[p1Last] || null;
       const p2Data = players?.[p2Last] || null;
       const surfaceKey = surface?.surface === "Clay" ? "clay" : surface?.surface === "Grass" ? "grass" : "hard";
-      const favorite = p1Odds !== "N/A" && p2Odds !== "N/A"
-        ? (Math.abs(p1Odds) > Math.abs(p2Odds) ? p2Last : p1Last)
-        : p1Last;
-      const gameTime = new Date(match.commence_time);
-      const timeStr = gameTime.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) + " ET";
-      const impliedP1 = p1Odds !== "N/A" ? (p1Odds < 0 ? Math.abs(p1Odds) / (Math.abs(p1Odds) + 100) * 100 : 100 / (p1Odds + 100) * 100).toFixed(0) : null;
-      const impliedP2 = p2Odds !== "N/A" ? (p2Odds < 0 ? Math.abs(p2Odds) / (Math.abs(p2Odds) + 100) * 100 : 100 / (p2Odds + 100) * 100).toFixed(0) : null;
+      const toImpliedPct = (odds) => {
+  if (odds === "N/A") return null;
+  if (odds < 0) return Math.abs(odds) / (Math.abs(odds) + 100) * 100;
+  return 100 / (odds + 100) * 100;
+};
+
+const impliedP1Num = toImpliedPct(p1Odds);
+const impliedP2Num = toImpliedPct(p2Odds);
+
+const favorite =
+  impliedP1Num !== null && impliedP2Num !== null
+    ? (impliedP1Num >= impliedP2Num ? p1Last : p2Last)
+    : p1Last;
+
+const gameTime = new Date(match.commence_time);
+const timeStr =
+  gameTime.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) + " ET";
+
+const impliedP1 = impliedP1Num !== null ? impliedP1Num.toFixed(0) : null;
+const impliedP2 = impliedP2Num !== null ? impliedP2Num.toFixed(0) : null;
       const buildNote = (pData, pLast, surfKey) => {
         if (!pData) return pLast + " — match data loaded.";
         const sNote = pData.surfaceNote?.[surfKey] || "";
@@ -965,7 +978,7 @@ if (gamesArray.length === 0) {
 }, [activeSport]);
 
   // Use live games if available, fall back to hardcoded
-  const displayGames = liveGames.length > 0 ? liveGames : GAMES;
+  const displayGames =   activeSport === "basketball_nba"     ? (liveGames.length > 0 ? liveGames : GAMES)     : liveGames;
   const cur = displayGames.find(g => g.key === activeGame) || displayGames[0];
 
 // cur now defined in App component with live data
@@ -1065,7 +1078,7 @@ if (gamesArray.length === 0) {
 
 {(activeSport === "basketball_nba" || activeSport.includes("tennis")) && liveError && (
   <div style={{padding:"12px 16px",background:"rgba(255,45,107,.08)",border:"1px solid rgba(255,45,107,.2)",marginBottom:"12px",fontFamily:"DM Mono,monospace",fontSize:"11px",color:"var(--magenta)"}}>
-    {liveError} — showing demo data
+    {liveError}{activeSport === "basketball_nba" ? " — showing demo data" : ""}
   </div>
 )}
             {(activeSport === "basketball_nba" || activeSport.includes("tennis")) && displayGames.map(g => (
@@ -1090,7 +1103,7 @@ if (gamesArray.length === 0) {
                         </div>
                       </div>
                       <div className="gm">
-                        <div className="sl">SPREAD</div>
+                        <div className="sl">   {activeSport === "basketball_nba"     ? "SPREAD"     : activeSport.includes("tennis")     ? "MARKET"     : "LINE"} </div>
                         <div className="sp">{g.spread}</div>
                         <div className="ou">{g.ou}</div>
                       </div>
